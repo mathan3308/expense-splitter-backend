@@ -6,25 +6,37 @@ import com.mathan.expensesplitter.dto.auth.RegisterRequest;
 import com.mathan.expensesplitter.dto.auth.RegisterResponse;
 import com.mathan.expensesplitter.entity.User;
 import com.mathan.expensesplitter.exception.UserAlreadyExistsException;
+import com.mathan.expensesplitter.exception.UserNotFoundException;
 import com.mathan.expensesplitter.repository.UserRepository;
 import com.mathan.expensesplitter.security.JwtService;
 import com.mathan.expensesplitter.service.UserService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           JwtService jwtService,
+                           AuthenticationManager authenticationManager) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+    }
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
@@ -63,7 +75,7 @@ public class UserServiceImpl implements UserService {
         );
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         String token = jwtService.generateToken(user.getEmail());
         log.info("User logged in successfully with email: {}", user.getEmail());

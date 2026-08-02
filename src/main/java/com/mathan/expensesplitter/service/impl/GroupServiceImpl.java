@@ -2,11 +2,14 @@ package com.mathan.expensesplitter.service.impl;
 
 import com.mathan.expensesplitter.dto.auth.group.CreateGroupRequest;
 import com.mathan.expensesplitter.dto.auth.group.GroupResponse;
+import com.mathan.expensesplitter.dto.auth.group.MemberResponse;
 import com.mathan.expensesplitter.entity.ExpenseGroup;
 import com.mathan.expensesplitter.entity.GroupMember;
 import com.mathan.expensesplitter.entity.User;
 import com.mathan.expensesplitter.exception.AccessDeniedException;
 import com.mathan.expensesplitter.exception.GroupNotFoundException;
+import com.mathan.expensesplitter.exception.InvalidExpenseException;
+import com.mathan.expensesplitter.exception.UserNotFoundException;
 import com.mathan.expensesplitter.repository.ExpenseGroupRepository;
 import com.mathan.expensesplitter.repository.GroupMemberRepository;
 import com.mathan.expensesplitter.repository.UserRepository;
@@ -14,25 +17,37 @@ import com.mathan.expensesplitter.security.SecurityUtils;
 import com.mathan.expensesplitter.service.GroupService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
+
+    private static final Logger log = LoggerFactory.getLogger(GroupServiceImpl.class);
+
     private final ExpenseGroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
 
+    public GroupServiceImpl(ExpenseGroupRepository groupRepository,
+                            GroupMemberRepository groupMemberRepository,
+                            UserRepository userRepository) {
+        this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
+        this.userRepository = userRepository;
+    }
+
     private void validateMember(Long groupId) {
+        if (!groupRepository.existsById(groupId)) {
+            throw new GroupNotFoundException("Group not found");
+        }
         Long currentUserId = SecurityUtils.getCurrentUser().getId();
-        groupMemberRepository
-                .findByExpenseGroupIdAndUserId(groupId, currentUserId)
-                .orElseThrow(() ->
-                        new AccessDeniedException("You are not a member of this group"));
+        if (!groupMemberRepository.existsByExpenseGroupIdAndUserId(groupId, currentUserId)) {
+            throw new AccessDeniedException("You are not a member of this group");
+        }
     }
 
     @Override
@@ -42,7 +57,7 @@ public class GroupServiceImpl implements GroupService {
         Long userId = SecurityUtils.getCurrentUser().getId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         ExpenseGroup group = ExpenseGroup.builder()
                 .name(request.getName())
@@ -99,6 +114,21 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public List<MemberResponse> getMembers(Long groupId) {
+        validateMember(groupId);
+
+        List<GroupMember> members = groupMemberRepository.findByExpenseGroupId(groupId);
+
+        return members.stream()
+                .map(member -> MemberResponse.builder()
+                        .id(member.getUser().getId())
+                        .name(member.getUser().getName())
+                        .email(member.getUser().getEmail())
+                        .build())
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void addMember(Long groupId, String email) {
         validateMember(groupId);
@@ -107,10 +137,10 @@ public class GroupServiceImpl implements GroupService {
                 .orElseThrow(() -> new GroupNotFoundException("Group not found"));
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         if (groupMemberRepository.existsByExpenseGroupIdAndUserId(groupId, user.getId())) {
-            throw new RuntimeException("User is already a member of this group");
+            throw new InvalidExpenseException("User is already a member of this group");
         }
 
         GroupMember newMember = GroupMember.builder()
@@ -128,7 +158,7 @@ public class GroupServiceImpl implements GroupService {
         validateMember(groupId);
 
         GroupMember targetMember = groupMemberRepository.findByExpenseGroupIdAndUserId(groupId, memberUserId)
-                .orElseThrow(() -> new RuntimeException("Member not found in this group"));
+                .orElseThrow(() -> new UserNotFoundException("Member not found in this group"));
 
         groupMemberRepository.delete(targetMember);
         log.info("Removed member user ID: {} from group ID: {}", memberUserId, groupId);

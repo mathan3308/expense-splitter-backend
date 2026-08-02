@@ -1,15 +1,9 @@
 package com.mathan.expensesplitter.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 @Entity
-@Table(name = "expense_groups")   // <-- changed
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "expense_groups")
 public class ExpenseGroup {
 
     @Id
@@ -20,4 +14,38 @@ public class ExpenseGroup {
     private String name;
 
     private String description;
+
+    public ExpenseGroup() {
+    }
+
+    public ExpenseGroup(Long id, String name, String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public static ExpenseGroupBuilder builder() {
+        return new ExpenseGroupBuilder();
+    }
+
+    public static class ExpenseGroupBuilder {
+        private Long id;
+        private String name;
+        private String description;
+
+        public ExpenseGroupBuilder id(Long id) { this.id = id; return this; }
+        public ExpenseGroupBuilder name(String name) { this.name = name; return this; }
+        public ExpenseGroupBuilder description(String description) { this.description = description; return this; }
+
+        public ExpenseGroup build() {
+            return new ExpenseGroup(id, name, description);
+        }
+    }
 }

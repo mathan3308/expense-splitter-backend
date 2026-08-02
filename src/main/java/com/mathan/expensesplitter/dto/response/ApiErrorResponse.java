@@ -1,4 +1,4 @@
-package com.mathan.expensesplitter.dto.auth.response;
+package com.mathan.expensesplitter.dto.response;
 
 import java.time.LocalDateTime;
 

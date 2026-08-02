@@ -6,7 +6,11 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -39,4 +43,19 @@ public class CreateExpenseRequest {
 
     @Valid
     private List<ExpenseSplitRequest> splits;
+
+    public Long getGroupId() { return groupId; }
+    public void setGroupId(Long groupId) { this.groupId = groupId; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public SplitType getSplitType() { return splitType; }
+    public void setSplitType(SplitType splitType) { this.splitType = splitType; }
+    public Long getPaidByUserId() { return paidByUserId; }
+    public void setPaidByUserId(Long paidByUserId) { this.paidByUserId = paidByUserId; }
+    public List<Long> getParticipantIds() { return participantIds; }
+    public void setParticipantIds(List<Long> participantIds) { this.participantIds = participantIds; }
+    public List<ExpenseSplitRequest> getSplits() { return splits; }
+    public void setSplits(List<ExpenseSplitRequest> splits) { this.splits = splits; }
 }

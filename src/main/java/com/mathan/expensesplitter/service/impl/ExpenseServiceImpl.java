@@ -1,6 +1,12 @@
 package com.mathan.expensesplitter.service.impl;
 
-import com.mathan.expensesplitter.dto.expense.*;
+import com.mathan.expensesplitter.dto.expense.CreateExpenseRequest;
+import com.mathan.expensesplitter.dto.expense.ExpenseResponse;
+import com.mathan.expensesplitter.dto.expense.ExpenseSplitRequest;
+import com.mathan.expensesplitter.dto.expense.ExpenseSplitResponse;
+import com.mathan.expensesplitter.dto.expense.ExpenseSummaryResponse;
+import com.mathan.expensesplitter.dto.expense.GroupBalanceResponse;
+import com.mathan.expensesplitter.dto.expense.SettlementResponse;
 import com.mathan.expensesplitter.entity.Expense;
 import com.mathan.expensesplitter.entity.ExpenseGroup;
 import com.mathan.expensesplitter.entity.ExpenseSplit;
@@ -10,12 +16,16 @@ import com.mathan.expensesplitter.exception.AccessDeniedException;
 import com.mathan.expensesplitter.exception.ExpenseNotFoundException;
 import com.mathan.expensesplitter.exception.GroupNotFoundException;
 import com.mathan.expensesplitter.exception.InvalidExpenseException;
-import com.mathan.expensesplitter.repository.*;
+import com.mathan.expensesplitter.repository.ExpenseGroupRepository;
+import com.mathan.expensesplitter.repository.ExpenseRepository;
+import com.mathan.expensesplitter.repository.ExpenseSplitRepository;
+import com.mathan.expensesplitter.repository.GroupMemberRepository;
+import com.mathan.expensesplitter.repository.UserRepository;
 import com.mathan.expensesplitter.security.SecurityUtils;
 import com.mathan.expensesplitter.service.ExpenseService;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,16 +36,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ExpenseServiceImpl implements ExpenseService {
 
+    private static final Logger log = LoggerFactory.getLogger(ExpenseServiceImpl.class);
+
     private final ExpenseRepository expenseRepository;
-    private final ExpenseSplitRepository expenseSplitRepository;
     private final ExpenseGroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
+    private final ExpenseSplitRepository expenseSplitRepository;
+
+    public ExpenseServiceImpl(ExpenseRepository expenseRepository,
+                              ExpenseGroupRepository groupRepository,
+                              GroupMemberRepository groupMemberRepository,
+                              UserRepository userRepository,
+                              ExpenseSplitRepository expenseSplitRepository) {
+        this.expenseRepository = expenseRepository;
+        this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
+        this.userRepository = userRepository;
+        this.expenseSplitRepository = expenseSplitRepository;
+    }
 
     @Override
     @Transactional
