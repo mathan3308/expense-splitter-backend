@@ -36,6 +36,7 @@ public class SecurityConfig {
 
         http
                 // Disable CSRF
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
 
                 // Disable HTTP Basic Authentication
